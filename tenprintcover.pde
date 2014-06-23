@@ -6,7 +6,7 @@ ControlP5 cp5;
 String api  = "http://api.flickr.com/services/rest/?method=flickr.photos.search";
 String flickrKey = "";
 
-String photoUrl;
+String photoUrl = "";
 
 PImage img;
 
@@ -16,7 +16,7 @@ PFont titleFont;
 PFont authorFont;
 boolean refresh = true;
 
-int minTitle = 6;
+int minTitle = 4;
 int maxTitle = 60;
 
 int coverWidth = 400;
@@ -30,23 +30,47 @@ int artworkStartY = 150;
 
 color coverBaseColor = color(204, 153, 0);
 color coverShapeColor = color(50);
-
 color baseColor = coverBaseColor;
 color shapeColor = coverShapeColor;
 
+int baseVariation = 50;
+int baseSaturation = 90;
+int baseBrightness = 60;
+
 int gridCount = 7;
 int shapeThickness = 10;
+
+String c64Letters = " qQwWeErRtTyYuUiIoOpPaAsSdDfFgGhHjJkKlL:zZxXcCvVbBnNmM";
 
 String title = "";
 String author = "";
 
 String[][] books = {
-  {"","Romance"},
-  {"","Fiction"},
-  {"","Biography"},
-  {"","Politics"},
-  {"","Science Fiction"},
-  {"","NonFiction"},
+  {"Laozi","道德經"},
+  {"Rachinskii, Sergei Aleksandrovich","1001 задача для умственного счета"},
+  {"Luo, Guanzhong","粉妝樓1-10回"},
+  {"Nobre, António Pereira","Só"},
+  {"Various","Väinölä"},
+  {"Zhang, Chao","幽夢影 — Part 1"},
+  {"Sunzi, active 6th century B.C.","兵法 (Bīng Fǎ)"},
+  {"Leino, Kasimir","Elämästä"},
+  {"Han, Ying, active 150 B.C.","韓詩外傳, Complete"},
+  {"Besant, Walter","As we are and as we may be"},
+  {"New York Trio","Trio No. 1 in B Flat, Pt. 1"},
+  {"Hale, Edward Everett, Sr.","How to do it"},
+  {"Milne, A. A. (Alan Alexander)","If I may"},
+  {"Lehtonen, Joel","Kuolleet omenapuut Runollista proosaa"},
+  {"Hassell, Antti Fredrik","Jaakko Cook'in matkat Tyynellä merellä"},
+  {"Hough, Emerson","The Mississippi bubble"},
+  {"Smith, George Adam","Four psalms, XXIII, XXXVI, LII, CXXI; interpreted for practical use."},
+  {"Canth, Minna","Hanna"},
+  {"Malot, Hector","Baccara"},
+  {"Bensusan, S. L. (Samuel Levy)","Morocco"},
+  {"Gauguin, Paul","Noa Noa"},
+  {"Rinehart, Mary Roberts","K"},
+  {"Various","Blackwood's Edinburgh Magazine — Volume 53, No. 327, January, 1843"},
+  {"Livingstone, David","The Last Journals of David Livingstone, in Central Africa, from 1865 to His Death, Volume II (of  2), 1869-1873"},
+  {"Ames, Azel","The Mayflower and Her Log; July 15, 1620-May 6, 1621 — Complete"},
   {"Jane Austen","Pride and Prejudice"},
   {"Arthur Conan Doyle","The Adventures of Sherlock Holmes"},
   {"Franz Kafka","Metamorphosis"},
@@ -73,17 +97,35 @@ void setup() {
   titleFont = loadFont("AvenirNext-Bold.vlw");
   authorFont = loadFont("AvenirNext-Regular.vlw");
   cp5.addSlider("gridCount")
-     .setPosition(10,10)
-     .setRange(1,20)
-     .setSize(300,10)
-     .setId(1)
-     ;
+    .setPosition(10,10)
+    .setRange(1,20)
+    .setSize(300,10)
+    .setId(1)
+    ;
   cp5.addSlider("shapeThickness")
-     .setPosition(10,30)
-     .setRange(1,15)
-     .setSize(300,10)
-     .setId(2)
-     ;
+    .setPosition(10,30)
+    .setRange(1,15)
+    .setSize(300,10)
+    .setId(2)
+    ;
+  cp5.addSlider("baseVariation")
+    .setPosition(10,50)
+    .setRange(0,60)
+    .setSize(300,10)
+    .setId(3)
+    ;
+  cp5.addSlider("baseSaturation")
+    .setPosition(10,70)
+    .setRange(0,100)
+    .setSize(300,10)
+    .setId(3)
+    ;
+  cp5.addSlider("baseBrightness")
+    .setPosition(10,90)
+    .setRange(0,100)
+    .setSize(300,10)
+    .setId(3)
+    ;
   String config[] = loadStrings("config.txt");
   flickrKey = config[0];
 }
@@ -107,6 +149,16 @@ void draw() {
 }
 
 void processColors() {
+  int counts = title.length() + author.length();
+  int colorSeed = int(map(counts, 0, 80, 0, 360));
+  colorMode(HSB, 360, 100, 100);
+  int rndSeed = colorSeed + int(random(baseVariation));
+  baseColor = color(rndSeed, baseSaturation, baseBrightness);
+  shapeColor = color((rndSeed-180)%360, baseSaturation, baseBrightness);
+  colorMode(RGB, 255);
+}
+
+void processColorsFlickr() {
   photoUrl = getFlickrData(author.replace(' ','+') + "+" + title.replace(' ','+'));
   if (photoUrl != "") {
     try {
@@ -163,7 +215,7 @@ void processColors() {
   }
 }
 
-void drawText () {
+void drawText() {
   fill(34, 34, 34);
   textFont(titleFont, 24);
   text(title, artworkStartX+margin, margin, coverWidth - (2 * margin), titleHeight);
@@ -172,15 +224,35 @@ void drawText () {
   text(author, artworkStartX+margin, titleHeight+margin, coverWidth - (2 * margin), authorHeight);
 }
 
+String c64Convert() {
+  // returns a string with all the c64-letter available in the title or a random set if none
+  String result = "";
+  int i, len = title.length();
+  char letter;
+  for (i=0; i<len; i++) {
+    letter = title.charAt(i);
+    if (c64Letters.indexOf(letter) == -1) {
+      int anIndex = floor(random(c64Letters.length()));
+      letter = c64Letters.charAt(anIndex);
+    }
+    // println("letter:" + letter);
+    result = result + letter;
+  }
+  // println("result:" + result);
+  return result;
+}
+
 void drawArtwork() {
   breakGrid();
   int i,j,gridSize=coverWidth/gridCount;
   int item = 0;
   fill(baseColor);
   rect(artworkStartX, artworkStartY, coverWidth, coverHeight);
+  String c64Title = c64Convert();
+  // println("c64Title.length(): "+c64Title.length());
   for (i=0; i<gridCount; i++) {
     for (j=0; j<gridCount; j++) {
-      char character = title.charAt(item%title.length());
+      char character = c64Title.charAt(item%c64Title.length());
       drawShape (character, artworkStartX+(j*gridSize), artworkStartY+(i*gridSize), gridSize);
       item++;
     }
