@@ -1,24 +1,52 @@
+import http.requests.*;
 import controlP5.*;
 
 ControlP5 cp5;
 
+String api  = "http://api.flickr.com/services/rest/?method=flickr.photos.search";
+String flickrKey = "";
+
+String photoUrl;
+
+PImage img;
+
+int screenWidth = 800;
+
 PFont titleFont;
 PFont authorFont;
 boolean refresh = true;
+
+int minTitle = 6;
+int maxTitle = 60;
+
 int coverWidth = 400;
 int coverHeight = 500;
 int currentBook = 0;
 int margin = 10;
 int titleHeight = 100;
 int authorHeight = 50;
-int artworkStart = 150;
+int artworkStartX = 400;
+int artworkStartY = 150;
 
 color coverBaseColor = color(204, 153, 0);
+color coverShapeColor = color(50);
+
+color baseColor = coverBaseColor;
+color shapeColor = coverShapeColor;
 
 int gridCount = 7;
 int shapeThickness = 10;
 
+String title = "";
+String author = "";
+
 String[][] books = {
+  {"","Romance"},
+  {"","Fiction"},
+  {"","Biography"},
+  {"","Politics"},
+  {"","Science Fiction"},
+  {"","NonFiction"},
   {"Jane Austen","Pride and Prejudice"},
   {"Arthur Conan Doyle","The Adventures of Sherlock Holmes"},
   {"Franz Kafka","Metamorphosis"},
@@ -37,64 +65,139 @@ String[][] books = {
 };
 
 
-void setup () {
-  size(coverWidth, coverHeight);
-  background(255);
+void setup() {
+  size(screenWidth, coverHeight);
+  background(0);
   noStroke();
   cp5 = new ControlP5(this);
   titleFont = loadFont("AvenirNext-Bold.vlw");
   authorFont = loadFont("AvenirNext-Regular.vlw");
   cp5.addSlider("gridCount")
-     .setPosition(300,0)
+     .setPosition(10,10)
      .setRange(1,20)
-     .setSize(100,10)
+     .setSize(300,10)
      .setId(1)
      ;
   cp5.addSlider("shapeThickness")
-     .setPosition(300,10)
+     .setPosition(10,30)
      .setRange(1,15)
-     .setSize(100,10)
+     .setSize(300,10)
      .setId(2)
      ;
+  String config[] = loadStrings("config.txt");
+  flickrKey = config[0];
 }
 
-void draw () {
+void draw() {
   if (refresh) {
     refresh = false;
-    background(255);
+    title = books[currentBook][1];
+    author = books[currentBook][0];
+    background(50);
+    fill(255);
+    rect(artworkStartX, 0, coverWidth, coverHeight);
+    processColors();
     drawArtwork();
     drawText();
+    if (photoUrl != "") {
+      img = loadImage(photoUrl);
+      image(img, 0, artworkStartY);
+    }
+  }
+}
+
+void processColors() {
+  photoUrl = getFlickrData(author.replace(' ','+') + "+" + title.replace(' ','+'));
+  if (photoUrl != "") {
+    try {
+      PostRequest post = new PostRequest("http://labs.gaidi.ca/brandr/api.php");
+      post.addData("image_url", photoUrl);
+      post.send();
+      String responseContent = post.getContent();
+      println("responseContent: " + responseContent);
+      if (responseContent.length()>0) {
+        JSONObject colorsResponse = JSONObject.parse(responseContent);
+        JSONArray colorsAccents = colorsResponse.getJSONArray("accents");
+        println("size:"+colorsAccents.size());
+        if (colorsAccents.size()>0) {
+          try {
+            JSONObject firstColorO = colorsAccents.getJSONObject(0);
+            int firstColor = unhex("ff"+firstColorO.getString("color"));
+            baseColor = color(firstColor);
+          }
+          catch (Exception ee) {
+            JSONObject firstColorO = colorsAccents.getJSONObject(0);
+            int firstColor = unhex("ff"+firstColorO.getInt("color"));
+            baseColor = color(firstColor);
+          }
+        } else {
+          baseColor = coverBaseColor;
+        }
+        println("baseColor: "+baseColor);
+        if (colorsAccents.size()>1) {
+          try {
+            JSONObject secondColorO = colorsAccents.getJSONObject(1);
+            int secondColor = unhex("ff"+secondColorO.getString("color"));
+            shapeColor = color(secondColor);
+          }
+          catch (Exception ee) {
+            JSONObject secondColorO = colorsAccents.getJSONObject(1);
+            int secondColor = unhex("ff"+secondColorO.getInt("color"));
+            shapeColor = color(secondColor);
+          }
+        } else {
+          shapeColor = coverShapeColor;
+        }
+        println("shapeColor: "+shapeColor);
+      } else {
+        baseColor = coverBaseColor;
+        shapeColor = coverShapeColor;
+      }
+    }
+    catch (Exception e) {
+      println ("There was an error loading the colors.");
+    }
+  } else {
+    baseColor = coverBaseColor;
+    shapeColor = coverShapeColor;
   }
 }
 
 void drawText () {
   fill(34, 34, 34);
   textFont(titleFont, 24);
-  text(books[currentBook][1], margin, margin, coverWidth - (2 * margin), titleHeight);
+  text(title, artworkStartX+margin, margin, coverWidth - (2 * margin), titleHeight);
   // fill(255);
   textFont(authorFont, 24);
-  text(books[currentBook][0], margin, titleHeight + margin, coverWidth - (2 * margin), authorHeight);
+  text(author, artworkStartX+margin, titleHeight+margin, coverWidth - (2 * margin), authorHeight);
 }
 
-void drawArtwork () {
+void drawArtwork() {
+  breakGrid();
   int i,j,gridSize=coverWidth/gridCount;
-  int[] fillColor = {50,205};
   int item = 0;
-  fill(coverBaseColor);
-  rect(0, artworkStart, coverWidth, coverHeight);
+  fill(baseColor);
+  rect(artworkStartX, artworkStartY, coverWidth, coverHeight);
   for (i=0; i<gridCount; i++) {
     for (j=0; j<gridCount; j++) {
-      char character = books[currentBook][1].charAt(item%books[currentBook][1].length());
-      fill(fillColor[item%2]);
-      fill(fillColor[0]);
-      drawShape (character, j*gridSize, artworkStart+(i*gridSize), gridSize);
+      char character = title.charAt(item%title.length());
+      drawShape (character, artworkStartX+(j*gridSize), artworkStartY+(i*gridSize), gridSize);
       item++;
     }
   }
 }
 
-void drawShape (char k, int x, int y, int s) {
+void breakGrid() {
+  int len = title.length();
+  println("title length:"+len);
+  if (len < minTitle) len = minTitle;
+  if (len > maxTitle) len = maxTitle;
+  gridCount = int(map(len, minTitle, maxTitle, 2, 11));
+}
+
+void drawShape(char k, int x, int y, int s) {
   ellipseMode(CORNER);
+  fill(shapeColor);
   switch (k) {
     case 'q':
     case 'Q':
@@ -104,7 +207,7 @@ void drawShape (char k, int x, int y, int s) {
     case 'W':
       ellipse(x, y, s, s);
       s = s-(shapeThickness*2);
-      fill(coverBaseColor);
+      fill(baseColor);
       ellipse(x+shapeThickness, y+shapeThickness, s, s);
       break;
     case 'e':
@@ -126,13 +229,13 @@ void drawShape (char k, int x, int y, int s) {
     case 'u':
     case 'U':
       arc(x, y, s*2, s*2, PI, PI+HALF_PI);
-      fill(coverBaseColor);
+      fill(baseColor);
       arc(x+shapeThickness, y+shapeThickness, (s-shapeThickness)*2, (s-shapeThickness)*2, PI, PI+HALF_PI);
       break;
     case 'i':
     case 'I':
       arc(x-s, y, s*2, s*2, PI+HALF_PI, TWO_PI);
-      fill(coverBaseColor);
+      fill(baseColor);
       arc(x-s+shapeThickness, y+shapeThickness, (s-shapeThickness)*2, (s-shapeThickness)*2, PI+HALF_PI, TWO_PI);
       break;
     case 'o':
@@ -172,13 +275,13 @@ void drawShape (char k, int x, int y, int s) {
     case 'j':
     case 'J':
       arc(x, y-s, s*2, s*2, HALF_PI, PI);
-      fill(coverBaseColor);
+      fill(baseColor);
       arc(x+shapeThickness, y-s+shapeThickness, (s-shapeThickness)*2, (s-shapeThickness)*2, HALF_PI, PI);
       break;
     case 'k':
     case 'K':
       arc(x-s, y-s, s*2, s*2, 0, HALF_PI);
-      fill(coverBaseColor);
+      fill(baseColor);
       arc(x-s+shapeThickness, y-s+shapeThickness, (s-shapeThickness)*2, (s-shapeThickness)*2, 0, HALF_PI);
       break;
     case 'l':
@@ -210,7 +313,7 @@ void drawShape (char k, int x, int y, int s) {
     case 'v':
     case 'V':
       rect(x, y, s, s);
-      fill(coverBaseColor);
+      fill(baseColor);
       triangle(x+shapeThickness, y, x+(s/2), y+(s/2)-shapeThickness, x+s-shapeThickness, y);
       triangle(x, y+shapeThickness, x+(s/2)-shapeThickness, y+(s/2), x, y+s-shapeThickness);
       triangle(x+shapeThickness, y+s, x+(s/2), y+(s/2)+shapeThickness, x+s-shapeThickness, y+s);
@@ -223,31 +326,34 @@ void drawShape (char k, int x, int y, int s) {
     case 'n':
     case 'N':
       rect(x, y, s, s);
-      fill(coverBaseColor);
+      fill(baseColor);
       triangle(x, y, x+s-shapeThickness, y, x, y+s-shapeThickness);
       triangle(x+shapeThickness, y+s, x+s, y+s, x+s, y+shapeThickness);
       break;
     case 'm':
     case 'M':
       rect(x, y, s, s);
-      fill(coverBaseColor);
+      fill(baseColor);
       triangle(x+shapeThickness, y, x+s, y, x+s, y+s-shapeThickness);
       triangle(x, y+shapeThickness, x, y+s, x+s-shapeThickness, y+s);
       break;
     default:
-      fill(coverBaseColor);
+      fill(baseColor);
       rect(x, y, s, s);
       break;
   }
 }
 
-void keyPressed () {
+void keyPressed() {
   if (key == ' ') {
     refresh = true;
     currentBook++;
     if (currentBook >= books.length) {
       currentBook = 0;
     }
+  } else if (key == 's') {
+    PImage temp = get(artworkStartX, 0, coverWidth, coverHeight);
+    temp.save("cover_" + currentBook + ".png");
   }
 }
 
@@ -261,3 +367,35 @@ void controlEvent(ControlEvent theEvent) {
   //   break;
   // }
 }
+
+String getFlickrData(String name) {
+  String url = "";
+  String request = api + "&text=" + name + "&per_page=1&format=json&nojsoncallback=1&content_type=1&api_key=" + flickrKey;
+  // println("--- request ---");
+  // println(request);
+  try {
+    JSONObject flickrData = loadJSONObject(request);
+    // println("--- data ---");
+    // println( flickrData );
+    JSONObject main = flickrData.getJSONObject("photos");
+    JSONArray photos = main.getJSONArray("photo");
+    // println("--- photos ---");
+    // println(photos);
+    JSONObject photo = photos.getJSONObject(0);
+    // println("--- photo ---");
+    // println(photo);
+    String photoId = photo.getString("id");
+    String secret = photo.getString("secret");
+    Integer farmId = photo.getInt("farm");
+    String serverId = photo.getString("server");
+    url = "https://farm" + farmId + ".staticflickr.com/" + serverId + "/" + photoId + "_" + secret + "_n.jpg";
+    println("--- url ---");
+    println(url);
+  }
+  catch (Exception e) {
+    println ("There was an error parsing the JSONObject.");
+  }
+  return url;
+}
+
+
