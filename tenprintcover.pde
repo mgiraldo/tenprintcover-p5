@@ -44,6 +44,10 @@ String c64Letters = " qQwWeErRtTyYuUiIoOpPaAsSdDfFgGhHjJkKlL:zZxXcCvVbBnNmM12345
 
 String title = "";
 String author = "";
+String filename = "";
+String[] bookList;
+
+boolean autosave = true;
 
 String[][] books = {
   {"Laozi","道德經"},
@@ -140,22 +144,45 @@ void setup() {
     ;
   String config[] = loadStrings("config.txt");
   flickrKey = config[0];
+  loadData();
 }
 
 void draw() {
   if (refresh) {
     refresh = false;
-    title = books[currentBook][1];
-    author = books[currentBook][0];
+    getCurrentBook();
     processColors();
     drawBackground();
     drawArtwork();
     drawText();
-    if (photoUrl != "") {
-      img = loadImage(photoUrl);
-      image(img, 0, artworkStartY);
+    if (autosave) {
+      saveCurrent();
+      currentBook++;
+      println("bookList:" + bookList.length);
+      if (currentBook < bookList.length) {
+        refresh = true;
+      } else {
+        autosave = false;
+      }
     }
   }
+}
+
+void getCurrentBook() {
+  JSONObject book = JSONObject.parse(bookList[currentBook]);
+  title = book.getString("title");
+  String subtitle = "";
+  try {
+    subtitle = book.getString("subtitle");
+  }
+  catch (Exception e) {
+    println("book has no subtitle");
+  }
+  if (!subtitle.equals("")) {
+    title += ": " + subtitle;
+  }
+  author = book.getString("authors");
+  filename = book.getString("identifier") + ".png";
 }
 
 void drawBackground() {
@@ -165,6 +192,7 @@ void drawBackground() {
 }
 
 void drawText() {
+  //…
   fill(50);
   textFont(titleFont, 24);
   text(title, artworkStartX+margin, margin+margin, coverWidth - (2 * margin), titleHeight);
@@ -286,6 +314,11 @@ void processColorsFlickr() {
     baseColor = coverBaseColor;
     shapeColor = coverShapeColor;
   }
+}
+
+void loadData() {
+  bookList = loadStrings("covers.json2");
+  println("bookList:" + bookList.length);
 }
 
 void drawShape(char k, int x, int y, int s) {
@@ -476,13 +509,21 @@ void drawShape(char k, int x, int y, int s) {
   }
 }
 
+void saveCurrent() {
+  PImage temp = get(artworkStartX, 0, coverWidth, coverHeight);
+  if (filename.equals("")) {
+    temp.save("output/cover_" + currentBook + ".png");
+  } else {
+    temp.save("output/" + filename);
+  }
+}
+
 void keyPressed() {
   if (key == ' ') {
     refresh = true;
     currentBook++;
   } else if (key == 's') {
-    PImage temp = get(artworkStartX, 0, coverWidth, coverHeight);
-    temp.save("cover_" + currentBook + ".png");
+    saveCurrent();
   }
   if (key == CODED) {
     refresh = true;
