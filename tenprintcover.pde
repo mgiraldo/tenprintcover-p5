@@ -11,22 +11,25 @@ String photoUrl = "";
 PImage img;
 
 int screenWidth = 800;
+int screenHeight = 400;
 
 PFont titleFont;
 PFont authorFont;
 boolean refresh = true;
+boolean autosave = true;
 
 int minTitle = 2;
 int maxTitle = 60;
 
-int coverWidth = 400;
-int coverHeight = 500;
+int coverWidth = 200;
+int coverHeight = 250;
 int currentBook = 0;
-int margin = 10;
-int titleHeight = 100;
-int authorHeight = 50;
+int margin = 5;
+int titleHeight = 55;
+int authorHeight = 25;
 int artworkStartX = 400;
-int artworkStartY = 150;
+int artworkStartY = 75;
+int fontSize = 14;
 
 color coverBaseColor = color(204, 153, 0);
 color coverShapeColor = color(50);
@@ -38,7 +41,7 @@ int baseSaturation = 90;
 int baseBrightness = 80;
 
 int gridCount = 7;
-int shapeThickness = 10;
+int shapeThickness = 5;
 
 String c64Letters = " qQwWeErRtTyYuUiIoOpPaAsSdDfFgGhHjJkKlL:zZxXcCvVbBnNmM1234567890.";
 
@@ -47,7 +50,6 @@ String author = "";
 String filename = "";
 String[] bookList;
 
-boolean autosave = true;
 
 String[][] books = {
   {"Laozi","道德經"},
@@ -106,12 +108,12 @@ String[][] books = {
 
 
 void setup() {
-  size(screenWidth, coverHeight);
+  size(screenWidth, screenHeight);
   background(0);
   noStroke();
   cp5 = new ControlP5(this);
-  titleFont = loadFont("AvenirNext-Bold.vlw");
-  authorFont = loadFont("AvenirNext-Regular.vlw");
+  titleFont = loadFont("AvenirNext-Bold-" + fontSize + ".vlw");
+  authorFont = loadFont("AvenirNext-Regular-" + fontSize + ".vlw");
   cp5.addSlider("gridCount")
     .setPosition(10,10)
     .setRange(1,20)
@@ -194,11 +196,12 @@ void drawBackground() {
 void drawText() {
   //…
   fill(50);
-  textFont(titleFont, 24);
+  textFont(titleFont, fontSize);
+  textLeading(14);
   text(title, artworkStartX+margin, margin+margin, coverWidth - (2 * margin), titleHeight);
   // fill(255);
-  textFont(authorFont, 24);
-  text(author, artworkStartX+margin, titleHeight+margin+margin, coverWidth - (2 * margin), authorHeight);
+  textFont(authorFont, fontSize);
+  text(author, artworkStartX+margin, titleHeight, coverWidth - (2 * margin), authorHeight);
 }
 
 String c64Convert() {
@@ -225,7 +228,7 @@ void drawArtwork() {
   int item = 0;
   fill(baseColor);
   rect(artworkStartX, 0, coverWidth, margin);
-  rect(artworkStartX, artworkStartY, coverWidth, coverHeight);
+  rect(artworkStartX, artworkStartY, coverWidth, coverWidth);
   String c64Title = c64Convert();
   // println("c64Title.length(): "+c64Title.length());
   for (i=0; i<gridCount; i++) {
