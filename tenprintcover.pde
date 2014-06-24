@@ -33,9 +33,9 @@ color coverShapeColor = color(50);
 color baseColor = coverBaseColor;
 color shapeColor = coverShapeColor;
 
-int baseVariation = 50;
+int baseVariation = 5;
 int baseSaturation = 90;
-int baseBrightness = 60;
+int baseBrightness = 80;
 
 int gridCount = 7;
 int shapeThickness = 10;
@@ -135,10 +135,8 @@ void draw() {
     refresh = false;
     title = books[currentBook][1];
     author = books[currentBook][0];
-    background(50);
-    fill(255);
-    rect(artworkStartX, 0, coverWidth, coverHeight);
     processColors();
+    drawBackground();
     drawArtwork();
     drawText();
     if (photoUrl != "") {
@@ -148,13 +146,23 @@ void draw() {
   }
 }
 
+void drawBackground() {
+  background(50);
+  fill(baseColor);
+  rect(artworkStartX, 0, coverWidth, coverHeight);
+}
+
 void processColors() {
   int counts = title.length() + author.length();
   int colorSeed = int(map(counts, 0, 80, 0, 360));
   colorMode(HSB, 360, 100, 100);
-  int rndSeed = colorSeed + int(random(baseVariation));
-  baseColor = color(rndSeed, baseSaturation, baseBrightness);
-  shapeColor = color((rndSeed-180)%360, baseSaturation, baseBrightness);
+  int rndSeed = (colorSeed + int(random(baseVariation)))%360;
+  int darkOnLight = (floor(random(2))==0) ? 1 : -1;
+  baseColor = color(rndSeed, baseSaturation, baseBrightness);// 55+(darkOnLight*25));
+  shapeColor = color((rndSeed+180)%360, baseSaturation, baseBrightness);// 55-(darkOnLight*25));
+  println("rndSeed:"+rndSeed);
+  println("baseColor:"+baseColor);
+  println("shapeColor:"+shapeColor);
   colorMode(RGB, 255);
 }
 
@@ -216,7 +224,7 @@ void processColorsFlickr() {
 }
 
 void drawText() {
-  fill(34, 34, 34);
+  fill(shapeColor);
   textFont(titleFont, 24);
   text(title, artworkStartX+margin, margin, coverWidth - (2 * margin), titleHeight);
   // fill(255);
@@ -261,7 +269,7 @@ void drawArtwork() {
 
 void breakGrid() {
   int len = title.length();
-  println("title length:"+len);
+  // println("title length:"+len);
   if (len < minTitle) len = minTitle;
   if (len > maxTitle) len = maxTitle;
   gridCount = int(map(len, minTitle, maxTitle, 2, 11));
