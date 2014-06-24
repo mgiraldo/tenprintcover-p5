@@ -16,7 +16,7 @@ PFont titleFont;
 PFont authorFont;
 boolean refresh = true;
 
-int minTitle = 4;
+int minTitle = 2;
 int maxTitle = 60;
 
 int coverWidth = 400;
@@ -33,14 +33,14 @@ color coverShapeColor = color(50);
 color baseColor = coverBaseColor;
 color shapeColor = coverShapeColor;
 
-int baseVariation = 5;
+int baseVariation = 100;
 int baseSaturation = 90;
 int baseBrightness = 80;
 
 int gridCount = 7;
 int shapeThickness = 10;
 
-String c64Letters = " qQwWeErRtTyYuUiIoOpPaAsSdDfFgGhHjJkKlL:zZxXcCvVbBnNmM";
+String c64Letters = " qQwWeErRtTyYuUiIoOpPaAsSdDfFgGhHjJkKlL:zZxXcCvVbBnNmM1234567890.";
 
 String title = "";
 String author = "";
@@ -85,7 +85,19 @@ String[][] books = {
   {"John Cleland","Memoirs of Fanny Hill"},
   {"Joshua Rose","Mechanical Drawing Self-Taught"},
   {"P.G. Wodwhouse","Right Ho, Jeeves"},
-  {"Andre Norton","All Cats Are Grey"}
+  {"Andre Norton","All Cats Are Grey"},
+  {"Lange, Algot","In the Amazon jungle"},
+  {"Michelson, Miriam","In the bishop's carriage"},
+  {"James, Henry","In the cage"},
+  {"Burroughs, John","In the Catskills"},
+  {"Doyle, Arthur Conan","The cabman's story"},
+  {"Yonge, Charlotte M.","The caged lion"},
+  {"Wright, Harold Bell","The calling of Dan Matthews"},
+  {"Grey, Zane","The call of the canyon"},
+  {"Williams and Williams","A History of Science — Volume 1"},
+  {"Williams and Williams","A History of Science — Volume 2"},
+  {"Williams and Williams","A History of Science — Volume 3"},
+  {"Williams and Williams","A History of Science — Volume 4"}
 };
 
 
@@ -110,7 +122,7 @@ void setup() {
     ;
   cp5.addSlider("baseVariation")
     .setPosition(10,50)
-    .setRange(0,60)
+    .setRange(0,100)
     .setSize(300,10)
     .setId(3)
     ;
@@ -148,18 +160,71 @@ void draw() {
 
 void drawBackground() {
   background(50);
-  fill(baseColor);
+  fill(255);
   rect(artworkStartX, 0, coverWidth, coverHeight);
+}
+
+void drawText() {
+  fill(50);
+  textFont(titleFont, 24);
+  text(title, artworkStartX+margin, margin+margin, coverWidth - (2 * margin), titleHeight);
+  // fill(255);
+  textFont(authorFont, 24);
+  text(author, artworkStartX+margin, titleHeight+margin+margin, coverWidth - (2 * margin), authorHeight);
+}
+
+String c64Convert() {
+  // returns a string with all the c64-letter available in the title or a random set if none
+  String result = "";
+  int i, len = title.length();
+  char letter;
+  for (i=0; i<len; i++) {
+    letter = title.charAt(i);
+    if (c64Letters.indexOf(letter) == -1) {
+      int anIndex = floor(random(c64Letters.length()));
+      letter = c64Letters.charAt(anIndex);
+    }
+    // println("letter:" + letter);
+    result = result + letter;
+  }
+  // println("result:" + result);
+  return result;
+}
+
+void drawArtwork() {
+  breakGrid();
+  int i,j,gridSize=coverWidth/gridCount;
+  int item = 0;
+  fill(baseColor);
+  rect(artworkStartX, 0, coverWidth, margin);
+  rect(artworkStartX, artworkStartY, coverWidth, coverHeight);
+  String c64Title = c64Convert();
+  // println("c64Title.length(): "+c64Title.length());
+  for (i=0; i<gridCount; i++) {
+    for (j=0; j<gridCount; j++) {
+      char character = c64Title.charAt(item%c64Title.length());
+      drawShape (character, artworkStartX+(j*gridSize), artworkStartY+(i*gridSize), gridSize);
+      item++;
+    }
+  }
+}
+
+void breakGrid() {
+  int len = title.length();
+  // println("title length:"+len);
+  if (len < minTitle) len = minTitle;
+  if (len > maxTitle) len = maxTitle;
+  gridCount = int(map(len, minTitle, maxTitle, 2, 11));
 }
 
 void processColors() {
   int counts = title.length() + author.length();
-  int colorSeed = int(map(counts, 0, 80, 0, 360));
+  int colorSeed = int(map(counts, 2, 80, 30, 360-baseVariation));
   colorMode(HSB, 360, 100, 100);
-  int rndSeed = (colorSeed + int(random(baseVariation)))%360;
+  int rndSeed = colorSeed + int(random(baseVariation));
   int darkOnLight = (floor(random(2))==0) ? 1 : -1;
-  baseColor = color(rndSeed, baseSaturation, baseBrightness);// 55+(darkOnLight*25));
-  shapeColor = color((rndSeed+180)%360, baseSaturation, baseBrightness);// 55-(darkOnLight*25));
+  shapeColor = color(rndSeed, baseSaturation, baseBrightness);// 55+(darkOnLight*25));
+  baseColor = color((rndSeed+180)%360, baseSaturation, baseBrightness);// 55-(darkOnLight*25));
   println("rndSeed:"+rndSeed);
   println("baseColor:"+baseColor);
   println("shapeColor:"+shapeColor);
@@ -221,58 +286,6 @@ void processColorsFlickr() {
     baseColor = coverBaseColor;
     shapeColor = coverShapeColor;
   }
-}
-
-void drawText() {
-  fill(shapeColor);
-  textFont(titleFont, 24);
-  text(title, artworkStartX+margin, margin, coverWidth - (2 * margin), titleHeight);
-  // fill(255);
-  textFont(authorFont, 24);
-  text(author, artworkStartX+margin, titleHeight+margin, coverWidth - (2 * margin), authorHeight);
-}
-
-String c64Convert() {
-  // returns a string with all the c64-letter available in the title or a random set if none
-  String result = "";
-  int i, len = title.length();
-  char letter;
-  for (i=0; i<len; i++) {
-    letter = title.charAt(i);
-    if (c64Letters.indexOf(letter) == -1) {
-      int anIndex = floor(random(c64Letters.length()));
-      letter = c64Letters.charAt(anIndex);
-    }
-    // println("letter:" + letter);
-    result = result + letter;
-  }
-  // println("result:" + result);
-  return result;
-}
-
-void drawArtwork() {
-  breakGrid();
-  int i,j,gridSize=coverWidth/gridCount;
-  int item = 0;
-  fill(baseColor);
-  rect(artworkStartX, artworkStartY, coverWidth, coverHeight);
-  String c64Title = c64Convert();
-  // println("c64Title.length(): "+c64Title.length());
-  for (i=0; i<gridCount; i++) {
-    for (j=0; j<gridCount; j++) {
-      char character = c64Title.charAt(item%c64Title.length());
-      drawShape (character, artworkStartX+(j*gridSize), artworkStartY+(i*gridSize), gridSize);
-      item++;
-    }
-  }
-}
-
-void breakGrid() {
-  int len = title.length();
-  // println("title length:"+len);
-  if (len < minTitle) len = minTitle;
-  if (len > maxTitle) len = maxTitle;
-  gridCount = int(map(len, minTitle, maxTitle, 2, 11));
 }
 
 void drawShape(char k, int x, int y, int s) {
@@ -417,6 +430,45 @@ void drawShape(char k, int x, int y, int s) {
       triangle(x+shapeThickness, y, x+s, y, x+s, y+s-shapeThickness);
       triangle(x, y+shapeThickness, x, y+s, x+s-shapeThickness, y+s);
       break;
+    case '7':
+      rect(x, y, s, shapeThickness*2);
+      break;
+    case '8':
+      rect(x, y, s, shapeThickness*3);
+      break;
+    case '9':
+      rect(x, y, shapeThickness, s);
+      rect(x, y+s-(shapeThickness*3), s, shapeThickness*3);
+      break;
+    case '4':
+      rect(x, y, shapeThickness*2, s);
+      break;
+    case '5':
+      rect(x, y, shapeThickness*3, s);
+      break;
+    case '6':
+      rect(x+s-(shapeThickness*3), y, shapeThickness*3, s);
+      break;
+    case '1':
+      rect(x, y+(s/2)-(shapeThickness/2), s, shapeThickness);
+      rect(x+(s/2)-(shapeThickness/2), y, shapeThickness, s/2+shapeThickness/2);
+      break;
+    case '2':
+      rect(x, y+(s/2)-(shapeThickness/2), s, shapeThickness);
+      rect(x+(s/2)-(shapeThickness/2), y+(s/2)-(shapeThickness/2), shapeThickness, s/2+shapeThickness/2);
+      break;
+    case '3':
+      rect(x, y+(s/2)-(shapeThickness/2), s/2+shapeThickness/2, shapeThickness);
+      rect(x+(s/2)-(shapeThickness/2), y, shapeThickness, s);
+      break;
+    case '0':
+      rect(x+(s/2)-(shapeThickness/2), y+(s/2)-(shapeThickness/2), shapeThickness, s/2+shapeThickness/2);
+      rect(x+(s/2)-(shapeThickness/2), y+(s/2)-(shapeThickness/2), s/2+shapeThickness/2, shapeThickness);
+      break;
+    case '.':
+      rect(x+(s/2)-(shapeThickness/2), y+(s/2)-(shapeThickness/2), shapeThickness, s/2+shapeThickness/2);
+      rect(x, y+(s/2)-(shapeThickness/2), s/2+shapeThickness/2, shapeThickness);
+      break;
     default:
       fill(baseColor);
       rect(x, y, s, s);
@@ -428,12 +480,23 @@ void keyPressed() {
   if (key == ' ') {
     refresh = true;
     currentBook++;
-    if (currentBook >= books.length) {
-      currentBook = 0;
-    }
   } else if (key == 's') {
     PImage temp = get(artworkStartX, 0, coverWidth, coverHeight);
     temp.save("cover_" + currentBook + ".png");
+  }
+  if (key == CODED) {
+    refresh = true;
+    if (keyCode == LEFT) {
+      currentBook--;
+    } else if (keyCode == RIGHT) {
+      currentBook++;
+    }
+  }
+  if (currentBook >= books.length) {
+    currentBook = 0;
+  }
+  if (currentBook < 0) {
+    currentBook = books.length-1;
   }
 }
 
