@@ -16,7 +16,7 @@ int screenHeight = 400;
 PFont titleFont;
 PFont authorFont;
 boolean refresh = true;
-boolean autosave = true;
+boolean autosave = false;
 
 int minTitle = 2;
 int maxTitle = 60;
@@ -160,7 +160,7 @@ void draw() {
     if (autosave) {
       saveCurrent();
       currentBook++;
-      println("bookList:" + bookList.length);
+      // println("bookList:" + bookList.length);
       if (currentBook < bookList.length) {
         refresh = true;
       } else {
@@ -211,8 +211,9 @@ String c64Convert() {
   char letter;
   for (i=0; i<len; i++) {
     letter = title.charAt(i);
+    // println("letter:" + letter + " num:" + int(letter));
     if (c64Letters.indexOf(letter) == -1) {
-      int anIndex = floor(random(c64Letters.length()));
+      int anIndex = int(letter)%c64Letters.length();//floor(random(c64Letters.length()));
       letter = c64Letters.charAt(anIndex);
     }
     // println("letter:" + letter);
@@ -250,13 +251,19 @@ void breakGrid() {
 
 void processColors() {
   int counts = title.length() + author.length();
-  int colorSeed = int(map(counts, 2, 80, 30, 360-baseVariation));
+  int colorSeed = int(map(counts, 2, 80, 30, 260));
   colorMode(HSB, 360, 100, 100);
-  int rndSeed = colorSeed + int(random(baseVariation));
-  int darkOnLight = (floor(random(2))==0) ? 1 : -1;
-  shapeColor = color(rndSeed, baseSaturation, baseBrightness);// 55+(darkOnLight*25));
-  baseColor = color((rndSeed+180)%360, baseSaturation, baseBrightness);// 55-(darkOnLight*25));
-  println("rndSeed:"+rndSeed);
+  // int rndSeed = colorSeed + int(random(baseVariation));
+  // int darkOnLight = (floor(random(2))==0) ? 1 : -1;
+  shapeColor = color(colorSeed, baseSaturation, baseBrightness-(counts%20));// 55+(darkOnLight*25));
+  baseColor = color((colorSeed+180)%360, baseSaturation, baseBrightness);// 55-(darkOnLight*25));
+  // println("inverted:"+(counts%10));
+  // if length of title+author is multiple of 10 make it inverted
+  if (counts%10==0) {
+    color tmpColor = baseColor;
+    baseColor = shapeColor;
+    shapeColor = tmpColor;
+  }
   println("baseColor:"+baseColor);
   println("shapeColor:"+shapeColor);
   colorMode(RGB, 255);
@@ -536,11 +543,11 @@ void keyPressed() {
       currentBook++;
     }
   }
-  if (currentBook >= books.length) {
+  if (currentBook >= bookList.length) {
     currentBook = 0;
   }
   if (currentBook < 0) {
-    currentBook = books.length-1;
+    currentBook = bookList.length-1;
   }
 }
 
