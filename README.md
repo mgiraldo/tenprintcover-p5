@@ -1,6 +1,5 @@
-10 PRINT "BOOK COVER"
-=================
-for Processing
+# 10 PRINT "BOOK COVER"
+## for Processing
 ----
 
 Authors: [Mauricio Giraldo Arteaga] / NYPL Labs
