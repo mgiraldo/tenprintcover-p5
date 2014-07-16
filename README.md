@@ -10,7 +10,7 @@ Authors: [Mauricio Giraldo Arteaga] / NYPL Labs
 ![Juan Ramón Jiménez](https://github.com/mgiraldo/tenprintcover-p5/raw/master/output/example5.png)
 ![Matilda Betham](https://github.com/mgiraldo/tenprintcover-p5/raw/master/output/example6.png)
 
-Processing-based book cover-generating algorithm based on [10PRINT](http://10print.org/).
+Processing-based book cover-generating algorithm based on [10PRINT](http://10print.org/). Artwork is inspired by the symbols found on the [Commodore PET](https://en.wikipedia.org/wiki/Commodore_PET) keyboard: ![Commodore PET keyboard](https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/PET_2001_Series-IMG_1724.JPG/1280px-PET_2001_Series-IMG_1724.JPG)
 
 There is also a [10 PRINT "BOOK COVER" for iOS]
 
