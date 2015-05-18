@@ -1,6 +1,8 @@
 # 10 PRINT "BOOK COVER"
 ## for Processing
 
+Read about this in more detail in [this blog post](http://www.nypl.org/blog/2014/09/03/generative-ebook-covers).
+
 Authors: [Mauricio Giraldo Arteaga] / [NYPL Labs]
 
 ![Laozi](https://github.com/mgiraldo/tenprintcover-p5/raw/master/output/example1.png)
