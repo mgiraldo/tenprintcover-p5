@@ -9,9 +9,10 @@ String flickrKey = "";
 String photoUrl = "";
 
 PImage img;
+PGraphics pg;
 
-int screenWidth = 800;
-int screenHeight = 400;
+int screenWidth = 1200;
+int screenHeight = 800;
 
 PFont titleFont;
 PFont authorFont;
@@ -22,14 +23,16 @@ int minTitle = 2;
 int maxTitle = 60;
 
 int coverWidth = 200;
-int coverHeight = 250;
+int coverHeight = 300;
 int currentBook = 0;
-int margin = 5;
+int margin = 2;
 int titleHeight = 55;
 int authorHeight = 25;
 int artworkStartX = 400;
-int artworkStartY = 75;
-int fontSize = 14;
+int artworkStartY = coverHeight-coverWidth;
+int coverStartY = 20;
+int titleFontSize = 18;
+int authorFontSize = 14;
 
 color coverBaseColor = color(204, 153, 0);
 color coverShapeColor = color(50);
@@ -37,11 +40,13 @@ color baseColor = coverBaseColor;
 color shapeColor = coverShapeColor;
 
 int baseVariation = 100;
-int baseSaturation = 90;
-int baseBrightness = 80;
+int baseSaturation = 100;
+int baseBrightness = 90;
+int colorDistance = 100;
+boolean invert = true;
 
 int gridCount = 7;
-int shapeThickness = 5;
+int shapeThickness = 10;
 
 String c64Letters = " qQwWeErRtTyYuUiIoOpPaAsSdDfFgGhHjJkKlL:zZxXcCvVbBnNmM1234567890.";
 
@@ -51,69 +56,11 @@ String filename = "";
 String[] bookList;
 
 
-String[][] books = {
-  {"Laozi","道德經"},
-  {"Rachinskii, Sergei Aleksandrovich","1001 задача для умственного счета"},
-  {"Luo, Guanzhong","粉妝樓1-10回"},
-  {"Nobre, António Pereira","Só"},
-  {"Various","Väinölä"},
-  {"Zhang, Chao","幽夢影 — Part 1"},
-  {"Sunzi, active 6th century B.C.","兵法 (Bīng Fǎ)"},
-  {"Leino, Kasimir","Elämästä"},
-  {"Han, Ying, active 150 B.C.","韓詩外傳, Complete"},
-  {"Besant, Walter","As we are and as we may be"},
-  {"New York Trio","Trio No. 1 in B Flat, Pt. 1"},
-  {"Hale, Edward Everett, Sr.","How to do it"},
-  {"Milne, A. A. (Alan Alexander)","If I may"},
-  {"Lehtonen, Joel","Kuolleet omenapuut Runollista proosaa"},
-  {"Hassell, Antti Fredrik","Jaakko Cook'in matkat Tyynellä merellä"},
-  {"Hough, Emerson","The Mississippi bubble"},
-  {"Smith, George Adam","Four psalms, XXIII, XXXVI, LII, CXXI; interpreted for practical use."},
-  {"Canth, Minna","Hanna"},
-  {"Malot, Hector","Baccara"},
-  {"Bensusan, S. L. (Samuel Levy)","Morocco"},
-  {"Gauguin, Paul","Noa Noa"},
-  {"Rinehart, Mary Roberts","K"},
-  {"Various","Blackwood's Edinburgh Magazine — Volume 53, No. 327, January, 1843"},
-  {"Livingstone, David","The Last Journals of David Livingstone, in Central Africa, from 1865 to His Death, Volume II (of  2), 1869-1873"},
-  {"Ames, Azel","The Mayflower and Her Log; July 15, 1620-May 6, 1621 — Complete"},
-  {"Jane Austen","Pride and Prejudice"},
-  {"Arthur Conan Doyle","The Adventures of Sherlock Holmes"},
-  {"Franz Kafka","Metamorphosis"},
-  {"Miguel de Cervantes Saavedra","Don Quixote"},
-  {"Oscar Wilde","The Importance of Being Earnest: A Trivial Comedy for Serious People"},
-  {"Frederick Douglass","Narrative of the Life of Frederick Douglass, an American Slave"},
-  {"E.M. Berens","Myths and Legends of Ancient Greece and Rome"},
-  {"Ambrose Bierce","The Devil's Dictionary"},
-  {"Edgar Rice Burroughs","A Princess of Mars"},
-  {"Ludwig Wittgenstein","Tractatus Logico-Philosophicus"},
-  {"Mark Twain","Life on the Mississippi"},
-  {"John Cleland","Memoirs of Fanny Hill"},
-  {"Joshua Rose","Mechanical Drawing Self-Taught"},
-  {"P.G. Wodwhouse","Right Ho, Jeeves"},
-  {"Andre Norton","All Cats Are Grey"},
-  {"Lange, Algot","In the Amazon jungle"},
-  {"Michelson, Miriam","In the bishop's carriage"},
-  {"James, Henry","In the cage"},
-  {"Burroughs, John","In the Catskills"},
-  {"Doyle, Arthur Conan","The cabman's story"},
-  {"Yonge, Charlotte M.","The caged lion"},
-  {"Wright, Harold Bell","The calling of Dan Matthews"},
-  {"Grey, Zane","The call of the canyon"},
-  {"Williams and Williams","A History of Science — Volume 1"},
-  {"Williams and Williams","A History of Science — Volume 2"},
-  {"Williams and Williams","A History of Science — Volume 3"},
-  {"Williams and Williams","A History of Science — Volume 4"}
-};
-
-
 void setup() {
   size(screenWidth, screenHeight);
   background(0);
   noStroke();
   cp5 = new ControlP5(this);
-  titleFont = loadFont("AvenirNext-Bold-" + fontSize + ".vlw");
-  authorFont = loadFont("AvenirNext-Regular-" + fontSize + ".vlw");
   cp5.addSlider("gridCount")
     .setPosition(10,10)
     .setRange(1,20)
@@ -122,13 +69,13 @@ void setup() {
     ;
   cp5.addSlider("shapeThickness")
     .setPosition(10,30)
-    .setRange(1,15)
+    .setRange(1,30)
     .setSize(300,10)
     .setId(2)
     ;
-  cp5.addSlider("baseVariation")
+  cp5.addSlider("margin")
     .setPosition(10,50)
-    .setRange(0,100)
+    .setRange(1,10)
     .setSize(300,10)
     .setId(3)
     ;
@@ -144,6 +91,23 @@ void setup() {
     .setSize(300,10)
     .setId(3)
     ;
+  cp5.addSlider("colorDistance")
+    .setPosition(10,110)
+    .setRange(0,180)
+    .setSize(300,10)
+    .setId(3)
+    ;
+  cp5.addSlider("coverWidth")
+    .setPosition(10,130)
+    .setRange(200,3600)
+    .setSize(300,10)
+    .setId(3)
+    ;
+  cp5.addToggle("invert")
+     .setPosition(10,170)
+     .setSize(50,20)
+     .setMode(ControlP5.SWITCH)
+     ;
   String config[] = loadStrings("config.txt");
   flickrKey = config[0];
   loadData();
@@ -151,12 +115,26 @@ void setup() {
 
 void draw() {
   if (refresh) {
+    background(0);
     refresh = false;
+    coverHeight = int(coverWidth * 1.5);
+    pg = createGraphics(coverWidth, coverHeight);
+    artworkStartY = coverHeight - coverWidth;
+    titleFontSize = int(coverWidth * 0.08);
+    authorFontSize = int(coverWidth * 0.07);
+    titleHeight = int((coverHeight - coverWidth - (coverHeight * margin / 100)) * 0.75);
+    authorHeight = int((coverHeight - coverWidth - (coverHeight * margin / 100)) * 0.25);
+    titleFont = createFont("AvenirNext-Bold", titleFontSize);
+    authorFont = createFont("AvenirNext-Regular", authorFontSize);
     getCurrentBook();
     processColors();
+    pg.beginDraw();
+    pg.noStroke();
     drawBackground();
     drawArtwork();
     drawText();
+    pg.endDraw();
+    image(pg, artworkStartX, coverStartY);
     if (autosave) {
       saveCurrent();
       currentBook++;
@@ -188,20 +166,20 @@ void getCurrentBook() {
 }
 
 void drawBackground() {
-  background(50);
-  fill(255);
-  rect(artworkStartX, 0, coverWidth, coverHeight);
+  pg.background(0);
+  pg.fill(255);
+  pg.rect(0, 0, coverWidth, coverHeight);
 }
 
 void drawText() {
   //…
-  fill(50);
-  textFont(titleFont, fontSize);
-  textLeading(14);
-  text(title, artworkStartX+margin, margin+margin, coverWidth - (2 * margin), titleHeight);
+  pg.fill(50);
+  pg.textFont(titleFont, titleFontSize);
+  pg.textLeading(titleFontSize);
+  pg.text(title, 0+(coverHeight * margin / 100), 0+(coverHeight * margin / 100 * 2), coverWidth - (2 * coverHeight * margin / 100), titleHeight);
   // fill(255);
-  textFont(authorFont, fontSize);
-  text(author, artworkStartX+margin, titleHeight, coverWidth - (2 * margin), authorHeight);
+  pg.textFont(authorFont, authorFontSize);
+  pg.text(author, 0+(coverHeight * margin / 100), 0+titleHeight, coverWidth - (2 * coverHeight * margin / 100), authorHeight);
 }
 
 String c64Convert() {
@@ -227,15 +205,17 @@ void drawArtwork() {
   breakGrid();
   int i,j,gridSize=coverWidth/gridCount;
   int item = 0;
-  fill(baseColor);
-  rect(artworkStartX, 0, coverWidth, margin);
-  rect(artworkStartX, artworkStartY, coverWidth, coverWidth);
+  pg.fill(baseColor);
+  pg.rect(0, 0, coverWidth, coverHeight * margin / 100);
+  pg.rect(0, 0+artworkStartY, coverWidth, coverWidth);
+  // pg.rect(0, 0, coverHeight * margin / 100 * 0.5, coverHeight);
+  // pg.rect(coverWidth - (coverHeight * margin / 100 * 0.5), 0, coverHeight * margin / 100 * 0.5, coverHeight);
   String c64Title = c64Convert();
   // println("c64Title.length(): "+c64Title.length());
   for (i=0; i<gridCount; i++) {
     for (j=0; j<gridCount; j++) {
       char character = c64Title.charAt(item%c64Title.length());
-      drawShape (character, artworkStartX+(j*gridSize), artworkStartY+(i*gridSize), gridSize);
+      drawShape (character, 0+(j*gridSize), 0+artworkStartY+(i*gridSize), gridSize);
       item++;
     }
   }
@@ -251,12 +231,17 @@ void breakGrid() {
 
 void processColors() {
   int counts = title.length() + author.length();
-  int colorSeed = int(map(counts, 2, 80, 30, 260));
+  int colorSeed = int(map(counts, 2, 80, 10, 360));
   colorMode(HSB, 360, 100, 100);
   // int rndSeed = colorSeed + int(random(baseVariation));
   // int darkOnLight = (floor(random(2))==0) ? 1 : -1;
   shapeColor = color(colorSeed, baseSaturation, baseBrightness-(counts%20));// 55+(darkOnLight*25));
-  baseColor = color((colorSeed+180)%360, baseSaturation, baseBrightness);// 55-(darkOnLight*25));
+  baseColor = color((colorSeed+colorDistance)%360, baseSaturation, baseBrightness);// 55-(darkOnLight*25));
+  if (invert) {
+    color tempColor = shapeColor;
+    shapeColor = baseColor;
+    baseColor = tempColor;
+  }
   // println("inverted:"+(counts%10));
   // if length of title+author is multiple of 10 make it inverted
   if (counts%10==0) {
@@ -332,199 +317,200 @@ void loadData() {
 }
 
 void drawShape(char k, int x, int y, int s) {
-  ellipseMode(CORNER);
-  fill(shapeColor);
+  pg.ellipseMode(CORNER);
+  pg.fill(shapeColor);
+  int thick = int(s * shapeThickness / 100);
   switch (k) {
     case 'q':
     case 'Q':
-      ellipse(x, y, s, s);
+      pg.ellipse(x, y, s, s);
       break;
     case 'w':
     case 'W':
-      ellipse(x, y, s, s);
-      s = s-(shapeThickness*2);
-      fill(baseColor);
-      ellipse(x+shapeThickness, y+shapeThickness, s, s);
+      pg.ellipse(x, y, s, s);
+      s = s-(thick*2);
+      pg.fill(baseColor);
+      pg.ellipse(x+thick, y+thick, s, s);
       break;
     case 'e':
     case 'E':
-      rect(x, y+shapeThickness, s, shapeThickness);
+      pg.rect(x, y+thick, s, thick);
       break;
     case 'r':
     case 'R':
-      rect(x, y+s-(shapeThickness*2), s, shapeThickness);
+      pg.rect(x, y+s-(thick*2), s, thick);
       break;
     case 't':
     case 'T':
-      rect(x+shapeThickness, y, shapeThickness, s);
+      pg.rect(x+thick, y, thick, s);
       break;
     case 'y':
     case 'Y':
-      rect(x+s-(shapeThickness*2), y, shapeThickness, s);
+      pg.rect(x+s-(thick*2), y, thick, s);
       break;
     case 'u':
     case 'U':
-      arc(x, y, s*2, s*2, PI, PI+HALF_PI);
-      fill(baseColor);
-      arc(x+shapeThickness, y+shapeThickness, (s-shapeThickness)*2, (s-shapeThickness)*2, PI, PI+HALF_PI);
+      pg.arc(x, y, s*2, s*2, PI, PI+HALF_PI);
+      pg.fill(baseColor);
+      pg.arc(x+thick, y+thick, (s-thick)*2, (s-thick)*2, PI, PI+HALF_PI);
       break;
     case 'i':
     case 'I':
-      arc(x-s, y, s*2, s*2, PI+HALF_PI, TWO_PI);
-      fill(baseColor);
-      arc(x-s+shapeThickness, y+shapeThickness, (s-shapeThickness)*2, (s-shapeThickness)*2, PI+HALF_PI, TWO_PI);
+      pg.arc(x-s, y, s*2, s*2, PI+HALF_PI, TWO_PI);
+      pg.fill(baseColor);
+      pg.arc(x-s+thick, y+thick, (s-thick)*2, (s-thick)*2, PI+HALF_PI, TWO_PI);
       break;
     case 'o':
     case 'O':
-      rect(x, y, s, shapeThickness);
-      rect(x, y, shapeThickness, s);
+      pg.rect(x, y, s, thick);
+      pg.rect(x, y, thick, s);
       break;
     case 'p':
     case 'P':
-      rect(x, y, s, shapeThickness);
-      rect(x+s-shapeThickness, y, shapeThickness, s);
+      pg.rect(x, y, s, thick);
+      pg.rect(x+s-thick, y, thick, s);
       break;
     case 'a':
     case 'A':
-      triangle(x, y+s, x+(s/2), y, x+s, y+s);
+      pg.triangle(x, y+s, x+(s/2), y, x+s, y+s);
       break;
     case 's':
     case 'S':
-      triangle(x, y, x+(s/2), y+s, x+s, y);
+      pg.triangle(x, y, x+(s/2), y+s, x+s, y);
       break;
     case 'd':
     case 'D':
-      rect(x, y+(shapeThickness*2), s, shapeThickness);
+      pg.rect(x, y+(thick*2), s, thick);
       break;
     case 'f':
     case 'F':
-      rect(x, y+s-(shapeThickness*3), s, shapeThickness);
+      pg.rect(x, y+s-(thick*3), s, thick);
       break;
     case 'g':
     case 'G':
-      rect(x+(shapeThickness*2), y, shapeThickness, s);
+      pg.rect(x+(thick*2), y, thick, s);
       break;
     case 'h':
     case 'H':
-      rect(x+s-(shapeThickness*3), y, shapeThickness, s);
+      pg.rect(x+s-(thick*3), y, thick, s);
       break;
     case 'j':
     case 'J':
-      arc(x, y-s, s*2, s*2, HALF_PI, PI);
-      fill(baseColor);
-      arc(x+shapeThickness, y-s+shapeThickness, (s-shapeThickness)*2, (s-shapeThickness)*2, HALF_PI, PI);
+      pg.arc(x, y-s, s*2, s*2, HALF_PI, PI);
+      pg.fill(baseColor);
+      pg.arc(x+thick, y-s+thick, (s-thick)*2, (s-thick)*2, HALF_PI, PI);
       break;
     case 'k':
     case 'K':
-      arc(x-s, y-s, s*2, s*2, 0, HALF_PI);
-      fill(baseColor);
-      arc(x-s+shapeThickness, y-s+shapeThickness, (s-shapeThickness)*2, (s-shapeThickness)*2, 0, HALF_PI);
+      pg.arc(x-s, y-s, s*2, s*2, 0, HALF_PI);
+      pg.fill(baseColor);
+      pg.arc(x-s+thick, y-s+thick, (s-thick)*2, (s-thick)*2, 0, HALF_PI);
       break;
     case 'l':
     case 'L':
-      rect(x, y, shapeThickness, s);
-      rect(x, y+s-shapeThickness, s, shapeThickness);
+      pg.rect(x, y, thick, s);
+      pg.rect(x, y+s-thick, s, thick);
       break;
     case ':':
-      rect(x+s-shapeThickness, y, shapeThickness, s);
-      rect(x, y+s-shapeThickness, s, shapeThickness);
+      pg.rect(x+s-thick, y, thick, s);
+      pg.rect(x, y+s-thick, s, thick);
       break;
     case 'z':
     case 'Z':
-      triangle(x, y+(s/2), x+(s/2), y, x+s, y+(s/2));
-      triangle(x, y+(s/2), x+(s/2), y+s, x+s, y+(s/2));
+      pg.triangle(x, y+(s/2), x+(s/2), y, x+s, y+(s/2));
+      pg.triangle(x, y+(s/2), x+(s/2), y+s, x+s, y+(s/2));
       break;
     case 'x':
     case 'X':
-      ellipseMode(CENTER);
-      ellipse(x+(s/2), y+(s/3), shapeThickness*2, shapeThickness*2);
-      ellipse(x+(s/3), y+s-(s/3), shapeThickness*2, shapeThickness*2);
-      ellipse(x+s-(s/3), y+s-(s/3), shapeThickness*2, shapeThickness*2);
-      ellipseMode(CORNER);
+      pg.ellipseMode(CENTER);
+      pg.ellipse(x+(s/2), y+(s/3), thick*2, thick*2);
+      pg.ellipse(x+(s/3), y+s-(s/3), thick*2, thick*2);
+      pg.ellipse(x+s-(s/3), y+s-(s/3), thick*2, thick*2);
+      pg.ellipseMode(CORNER);
       break;
     case 'c':
     case 'C':
-      rect(x, y+(shapeThickness*3), s, shapeThickness);
+      pg.rect(x, y+(thick*3), s, thick);
       break;
     case 'v':
     case 'V':
-      rect(x, y, s, s);
-      fill(baseColor);
-      triangle(x+shapeThickness, y, x+(s/2), y+(s/2)-shapeThickness, x+s-shapeThickness, y);
-      triangle(x, y+shapeThickness, x+(s/2)-shapeThickness, y+(s/2), x, y+s-shapeThickness);
-      triangle(x+shapeThickness, y+s, x+(s/2), y+(s/2)+shapeThickness, x+s-shapeThickness, y+s);
-      triangle(x+s, y+shapeThickness, x+s, y+s-shapeThickness, x+(s/2)+shapeThickness, y+(s/2));
+      pg.rect(x, y, s, s);
+      pg.fill(baseColor);
+      pg.triangle(x+thick, y, x+(s/2), y+(s/2)-thick, x+s-thick, y);
+      pg.triangle(x, y+thick, x+(s/2)-thick, y+(s/2), x, y+s-thick);
+      pg.triangle(x+thick, y+s, x+(s/2), y+(s/2)+thick, x+s-thick, y+s);
+      pg.triangle(x+s, y+thick, x+s, y+s-thick, x+(s/2)+thick, y+(s/2));
       break;
     case 'b':
     case 'B':
-      rect(x+(shapeThickness*3), y, shapeThickness, s);
+      pg.rect(x+(thick*3), y, thick, s);
       break;
     case 'n':
     case 'N':
-      rect(x, y, s, s);
-      fill(baseColor);
-      triangle(x, y, x+s-shapeThickness, y, x, y+s-shapeThickness);
-      triangle(x+shapeThickness, y+s, x+s, y+s, x+s, y+shapeThickness);
+      pg.rect(x, y, s, s);
+      pg.fill(baseColor);
+      pg.triangle(x, y, x+s-thick, y, x, y+s-thick);
+      pg.triangle(x+thick, y+s, x+s, y+s, x+s, y+thick);
       break;
     case 'm':
     case 'M':
-      rect(x, y, s, s);
-      fill(baseColor);
-      triangle(x+shapeThickness, y, x+s, y, x+s, y+s-shapeThickness);
-      triangle(x, y+shapeThickness, x, y+s, x+s-shapeThickness, y+s);
+      pg.rect(x, y, s, s);
+      pg.fill(baseColor);
+      pg.triangle(x+thick, y, x+s, y, x+s, y+s-thick);
+      pg.triangle(x, y+thick, x, y+s, x+s-thick, y+s);
       break;
     case '7':
-      rect(x, y, s, shapeThickness*2);
+      pg.rect(x, y, s, thick*2);
       break;
     case '8':
-      rect(x, y, s, shapeThickness*3);
+      pg.rect(x, y, s, thick*3);
       break;
     case '9':
-      rect(x, y, shapeThickness, s);
-      rect(x, y+s-(shapeThickness*3), s, shapeThickness*3);
+      pg.rect(x, y, thick, s);
+      pg.rect(x, y+s-(thick*3), s, thick*3);
       break;
     case '4':
-      rect(x, y, shapeThickness*2, s);
+      pg.rect(x, y, thick*2, s);
       break;
     case '5':
-      rect(x, y, shapeThickness*3, s);
+      pg.rect(x, y, thick*3, s);
       break;
     case '6':
-      rect(x+s-(shapeThickness*3), y, shapeThickness*3, s);
+      pg.rect(x+s-(thick*3), y, thick*3, s);
       break;
     case '1':
-      rect(x, y+(s/2)-(shapeThickness/2), s, shapeThickness);
-      rect(x+(s/2)-(shapeThickness/2), y, shapeThickness, s/2+shapeThickness/2);
+      pg.rect(x, y+(s/2)-(thick/2), s, thick);
+      pg.rect(x+(s/2)-(thick/2), y, thick, s/2+thick/2);
       break;
     case '2':
-      rect(x, y+(s/2)-(shapeThickness/2), s, shapeThickness);
-      rect(x+(s/2)-(shapeThickness/2), y+(s/2)-(shapeThickness/2), shapeThickness, s/2+shapeThickness/2);
+      pg.rect(x, y+(s/2)-(thick/2), s, thick);
+      pg.rect(x+(s/2)-(thick/2), y+(s/2)-(thick/2), thick, s/2+thick/2);
       break;
     case '3':
-      rect(x, y+(s/2)-(shapeThickness/2), s/2+shapeThickness/2, shapeThickness);
-      rect(x+(s/2)-(shapeThickness/2), y, shapeThickness, s);
+      pg.rect(x, y+(s/2)-(thick/2), s/2+thick/2, thick);
+      pg.rect(x+(s/2)-(thick/2), y, thick, s);
       break;
     case '0':
-      rect(x+(s/2)-(shapeThickness/2), y+(s/2)-(shapeThickness/2), shapeThickness, s/2+shapeThickness/2);
-      rect(x+(s/2)-(shapeThickness/2), y+(s/2)-(shapeThickness/2), s/2+shapeThickness/2, shapeThickness);
+      pg.rect(x+(s/2)-(thick/2), y+(s/2)-(thick/2), thick, s/2+thick/2);
+      pg.rect(x+(s/2)-(thick/2), y+(s/2)-(thick/2), s/2+thick/2, thick);
       break;
     case '.':
-      rect(x+(s/2)-(shapeThickness/2), y+(s/2)-(shapeThickness/2), shapeThickness, s/2+shapeThickness/2);
-      rect(x, y+(s/2)-(shapeThickness/2), s/2+shapeThickness/2, shapeThickness);
+      pg.rect(x+(s/2)-(thick/2), y+(s/2)-(thick/2), thick, s/2+thick/2);
+      pg.rect(x, y+(s/2)-(thick/2), s/2+thick/2, thick);
       break;
     default:
-      fill(baseColor);
-      rect(x, y, s, s);
+      pg.fill(baseColor);
+      pg.rect(x, y, s, s);
       break;
   }
 }
 
 void saveCurrent() {
-  PImage temp = get(artworkStartX, 0, coverWidth, coverHeight);
+  // PImage temp = get(artworkStartX, coverStartY, coverWidth, coverHeight);
   if (filename.equals("")) {
-    temp.save("output/cover_" + currentBook + ".png");
+    pg.save("output/cover_" + currentBook + ".png");
   } else {
-    temp.save("output/" + filename);
+    pg.save("output/" + filename);
   }
 }
 
