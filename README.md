@@ -18,11 +18,11 @@ Processing-based book cover-generating algorithm based on [10PRINT](http://10pri
 
 You need to modify the font in both `createFont` calls to reflect a font you have in your computer ([see reference](https://processing.org/reference/textFont_.html)). This way the artwork scales as much as you want according to the width.
 
-#### iOS/Objective-C
+#### Other versions
+- [10 PRINT "BOOK COVER" for Python]
+- [10 PRINT "BOOK COVER" for iOS]
 
-There is also a [10 PRINT "BOOK COVER" for iOS]
-
-
+[10 PRINT "BOOK COVER" for Python]: https://github.com/mgiraldo/tenprintcover-py
 [Mauricio Giraldo Arteaga]: https://twitter.com/mgiraldo
 [NYPL Labs]: http://labs.nypl.org
 [10 PRINT "BOOK COVER" for iOS]: https://github.com/mgiraldo/tenprintcover-ios
