@@ -14,11 +14,15 @@ Authors: [Mauricio Giraldo Arteaga] / [NYPL Labs]
 
 Processing-based book cover-generating algorithm based on [10PRINT](http://10print.org/). Artwork is inspired by the symbols found on the [Commodore PET](https://en.wikipedia.org/wiki/Commodore_PET) keyboard: ![Commodore PET keyboard](https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/PET_2001_Series-IMG_1724.JPG/1280px-PET_2001_Series-IMG_1724.JPG)
 
-#### Scalable
+### Scalable
 
 You need to modify the font in both `createFont` calls to reflect a font you have in your computer ([see reference](https://processing.org/reference/textFont_.html)). This way the artwork scales as much as you want according to the width.
 
-#### Other versions
+### License
+
+See [LICENSE](LICENSE)
+
+### Other versions
 - [10 PRINT "BOOK COVER" for Python]
 - [10 PRINT "BOOK COVER" for iOS]
 
